@@ -94,7 +94,7 @@ func pr0Fetch() (err error) {
 		if err = pr0APIcall(_SyncURI, &syncResponse, meCookie); err != nil {
 			return err
 		}
-		unreadMessages = 2
+		unreadMessages = 0
 		for _, v := range syncResponse["inbox"].(map[string]interface{}) {
 			_ = v
 			if reflect.TypeOf(v).String() == "int" {
@@ -121,7 +121,7 @@ func pr0Fetch() (err error) {
 		}
 
 		// das pr0 bei Nacht am Morgen ruhen lassen
-		time.Sleep(time.Second * 30)
+		time.Sleep(time.Second * 60)
 	}
 }
 
