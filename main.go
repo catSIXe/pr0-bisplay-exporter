@@ -97,8 +97,8 @@ func pr0Fetch() (err error) {
 		unreadMessages = 0
 		for _, v := range syncResponse["inbox"].(map[string]interface{}) {
 			_ = v
-			if reflect.TypeOf(v).String() == "int" {
-				unreadMessages += byte(v.(int))
+			if reflect.TypeOf(v).String() == "float64" {
+				unreadMessages += byte(v.(float64))
 			}
 		}
 		stats.unreadMessages = unreadMessages
