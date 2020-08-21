@@ -9,10 +9,17 @@ import (
 
 // App defines the Application Settings structure
 type App struct {
-	Username                 string
-	Cookie                   string
-	TargetIP                 string
-	SettingNotificationFlash bool
+	Username                     string
+	Cookie                       string
+	TargetIP                     string
+	SettingNotificationFlash     byte
+	SettingOnlyBenis             byte
+	SettingHideTrend             byte
+	SettingHideHochladID         byte
+	SettingHideNotificationCount byte
+	Setting5                     byte
+	Setting6                     byte
+	Setting7                     byte
 }
 
 // LoadSettings will pull the application config from the environment, or from

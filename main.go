@@ -79,33 +79,32 @@ func MaxU32(x, y uint32) uint32 {
 }
 
 // fetches pr0gramm info
-func pr0Fetch() {
+func pr0Fetch() (err error) {
 	var (
 		meCookie         *http.Cookie
-		err              error
 		syncResponse     map[string]interface{}
 		profileResponse  map[string]interface{}
 		getItemsResponse map[string]interface{}
-		unreadMessages   int
+		unreadMessages   byte
 		alterBenis       int32 = 0
 	)
 	meCookie = &http.Cookie{Name: "me", Value: conf.Cookie}
 	for {
 		// ungelese Nachrichten
 		if err = pr0APIcall(_SyncURI, &syncResponse, meCookie); err != nil {
-			panic(err)
+			return err
 		}
-		unreadMessages = 0
+		unreadMessages = 2
 		for _, v := range syncResponse["inbox"].(map[string]interface{}) {
 			_ = v
 			if reflect.TypeOf(v).String() == "int" {
-				unreadMessages += v.(int)
+				unreadMessages += byte(v.(int))
 			}
 		}
-
+		stats.unreadMessages = unreadMessages
 		// Benis Score
 		if err = pr0APIcall(_ProfileURI+conf.Username, &profileResponse, meCookie); err != nil {
-			panic(err)
+			return err
 		}
 		stats.benis = int32(profileResponse["user"].(map[string]interface{})["score"].(float64))
 		stats.deltaBenis = stats.benis - alterBenis
@@ -114,7 +113,7 @@ func pr0Fetch() {
 
 		// Hochlade ID
 		if err = pr0APIcall(_GetItemsURI, &getItemsResponse, meCookie); err != nil {
-			panic(err)
+			return err
 		}
 		for _, v := range getItemsResponse["items"].([]interface{}) {
 			subInt := uint32(v.(map[string]interface{})["id"].(float64))
@@ -127,20 +126,29 @@ func pr0Fetch() {
 }
 
 // sends udp data
-func pr0Transmit() {
+func pr0Transmit() (err error) {
 	var (
-		err        error
-		ServerAddr *net.UDPAddr
-		Conn       *net.UDPConn
+		ServerAddr       *net.UDPAddr
+		Conn             *net.UDPConn
+		settingsRegister byte
 	)
 	stats = &Pr0Stats{head: 0x01}
-	byteArray := make([]byte, 1+4+4+1+4+(1)) // +1 Byte extra für Einstellungsregister
+	byteArray := make([]byte, (1+4+4+1+4)+(1)) // +1 Byte extra für Einstellungsregister
 	if ServerAddr, err = net.ResolveUDPAddr("udp", conf.TargetIP); err != nil {
-		panic(err)
+		return err
 	}
 	if Conn, err = net.DialUDP("udp", nil, ServerAddr); err != nil {
-		panic(err)
+		return err
 	}
+
+	settingsRegister = conf.SettingNotificationFlash
+	settingsRegister |= conf.SettingOnlyBenis << 1
+	settingsRegister |= conf.SettingHideTrend << 2
+	settingsRegister |= conf.SettingHideHochladID << 3
+	settingsRegister |= conf.SettingHideNotificationCount << 4
+	settingsRegister |= conf.Setting5 << 5
+	settingsRegister |= conf.Setting6 << 6
+	settingsRegister |= conf.Setting7 << 7
 
 	defer Conn.Close()
 	i := 0
@@ -152,7 +160,7 @@ func pr0Transmit() {
 		binary.LittleEndian.PutUint32(byteArray[5:], uint32(stats.deltaBenis))
 		byteArray[1+4+4] = stats.unreadMessages
 		binary.LittleEndian.PutUint32(byteArray[10:], uint32(stats.maxHochladeID))
-		byteArray[1+4+4+1+4] = 0x01
+		byteArray[1+4+4+1+4] = settingsRegister
 		// fmt.Println(byteArray)
 		_, err := Conn.Write(byteArray)
 		if err != nil {
@@ -161,10 +169,11 @@ func pr0Transmit() {
 		time.Sleep(time.Second * 5)
 	}
 }
+
 func main() {
 	var err error
 	if conf, err = settings.LoadSettings(); err != nil {
-		fmt.Errorf("Bitte pruefe deine Einstellungen in der .env Datei")
+		fmt.Errorf("Bitte pruefe deine Einstellungen in der .env Datei oder den Umgebungsvariabeln")
 		return
 	}
 
@@ -172,11 +181,15 @@ func main() {
 	wg.Add(2 + 1)
 
 	go func() {
-		pr0Transmit()
+		if err = pr0Transmit(); err != nil {
+			panic(err)
+		}
 		wg.Done()
 	}()
 	go func() {
-		pr0Fetch()
+		if err = pr0Fetch(); err != nil {
+			panic(err)
+		}
 		wg.Done()
 	}()
 
