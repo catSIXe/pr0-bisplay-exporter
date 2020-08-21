@@ -121,7 +121,7 @@ func pr0Fetch() (err error) {
 		}
 
 		// das pr0 bei Nacht am Morgen ruhen lassen
-		time.Sleep(time.Second * 60)
+		time.Sleep(time.Second * 20)
 	}
 }
 
