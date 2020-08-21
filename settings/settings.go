@@ -9,6 +9,7 @@ import (
 
 // App defines the Application Settings structure
 type App struct {
+	PrometheusExporter           byte
 	Username                     string
 	Cookie                       string
 	TargetIP                     string

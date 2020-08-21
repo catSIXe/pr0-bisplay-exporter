@@ -151,10 +151,7 @@ func pr0Transmit() (err error) {
 	settingsRegister |= conf.Setting7 << 7
 
 	defer Conn.Close()
-	i := 0
 	for {
-		msg := strconv.Itoa(i)
-		i++
 		byteArray[0] = stats.head
 		binary.LittleEndian.PutUint32(byteArray[1:], uint32(stats.benis))
 		binary.LittleEndian.PutUint32(byteArray[5:], uint32(stats.deltaBenis))
@@ -162,9 +159,8 @@ func pr0Transmit() (err error) {
 		binary.LittleEndian.PutUint32(byteArray[10:], uint32(stats.maxHochladeID))
 		byteArray[1+4+4+1+4] = settingsRegister
 		// fmt.Println(byteArray)
-		_, err := Conn.Write(byteArray)
-		if err != nil {
-			fmt.Println(msg, err)
+		if _, err := Conn.Write(byteArray); err != nil {
+			fmt.Println(err)
 		}
 		time.Sleep(time.Second * 5)
 	}
