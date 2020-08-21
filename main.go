@@ -21,7 +21,7 @@ import (
 )
 
 const _SyncURI = "https://pr0gramm.com/api/user/sync?offset=-1"
-const _ProfileURI = "https://pr0gramm.com/api/profile/info?name=cat6e&flags=1"
+const _ProfileURI = "https://pr0gramm.com/api/profile/info?flags=1&name="
 const _GetItemsURI = "https://pr0gramm.com/api/items/get?flags=1"
 
 // Pr0Stats is the struct the ESP32 also has a copy off for the protocol
@@ -104,7 +104,7 @@ func pr0Fetch() {
 		}
 
 		// Benis Score
-		if err = pr0APIcall(_ProfileURI, &profileResponse, meCookie); err != nil {
+		if err = pr0APIcall(_ProfileURI+conf.Username, &profileResponse, meCookie); err != nil {
 			panic(err)
 		}
 		stats.benis = int32(profileResponse["user"].(map[string]interface{})["score"].(float64))

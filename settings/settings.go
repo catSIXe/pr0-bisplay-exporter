@@ -9,6 +9,7 @@ import (
 
 // App defines the Application Settings structure
 type App struct {
+	Username                 string
 	Cookie                   string
 	TargetIP                 string
 	SettingNotificationFlash bool
